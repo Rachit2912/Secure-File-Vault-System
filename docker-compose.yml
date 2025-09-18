@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:15
+    container_name: filevault-db
+    environment:
+      POSTGRES_USER: filevault_db
+      POSTGRES_PASSWORD: filevault_db
+      POSTGRES_DB: filevault
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:
