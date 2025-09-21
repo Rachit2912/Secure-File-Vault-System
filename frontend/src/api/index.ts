@@ -72,3 +72,33 @@ export async function postReq(path: string, body?: unknown) {
 export function notifyRateLimit(msg: string) {
   window.dispatchEvent(new CustomEvent("rateLimitError", { detail: msg }));
 }
+
+// File upload helper (supports FormData) :
+export async function handleUpload(url: string, formData: FormData) {
+  // 1. send multipart/form-data request:
+  const res = await fetch(url, {
+    method: "POST",
+    body: formData,
+    credentials: "include",
+  });
+
+  // 2. handle errors with details (quota, MIME, etc.):
+  if (!res.ok) {
+    let errorBody: any = {};
+    try {
+      errorBody = await res.json();
+    } catch {
+      errorBody = {};
+    }
+
+    const msg = errorBody.error || "Upload failed";
+
+    const error: any = new Error(msg);
+    error.status = res.status;
+    error.details = errorBody;
+    throw error;
+  }
+
+  // 3. return parsed JSON :
+  return res.json();
+}
