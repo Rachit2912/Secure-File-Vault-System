@@ -6,20 +6,16 @@ import (
 	"net/http"
 	"os"
 
-	"backend/db"
-	"backend/handlers"
-	"backend/middleware"
-
-	"github.com/joho/godotenv"
+	"backend/internal/config"
+	"backend/internal/db"
+	"backend/internal/handlers"
+	"backend/internal/middleware"
 )
 
 func main() {
 
-	 // loading environment variables from .env file
-	 if err := godotenv.Load(); err != nil {
-        log.Println("No .env file found !")
-    }
-
+	// loading environment variables from .env file
+	config.LoadConfig()
 	
 	// connection to postgrSQL : 
 	if err := db.Connect(); err != nil {
