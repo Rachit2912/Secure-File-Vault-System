@@ -4,10 +4,10 @@ import (
 	"database/sql"
 	"errors"
 
-	"backend/db"
+	"backend/internal/db"
 )
 
-// data-structure for user information  :
+// User represents a row in the users table
 type User struct {
 	ID       int    `json:"id"`
 	Username string `json:"username"`
@@ -16,7 +16,7 @@ type User struct {
 	Role     string `json:"role"`
 }
 
-// helper fn. for gettting user details by user_id : 
+// GetUserByID fetches a user by their ID
 func GetUserByID(id int) (*User, error) {
 	row := db.DB.QueryRow(`
         SELECT id, username, email, role

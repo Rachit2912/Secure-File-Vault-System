@@ -1,9 +1,10 @@
 package handlers
 
 import (
-	"backend/db"
-	"backend/middleware"
-	"backend/models"
+	"backend/internal/db"
+	"backend/internal/middleware"
+	"backend/internal/models"
+	"backend/internal/services"
 	"database/sql"
 	"encoding/json"
 	"net/http"
@@ -12,14 +13,15 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// exported constant so handlers can use it
 type contextKey string
 
-// exported constant so handlers can use it
 const ContextUserIDKey = contextKey("userID")
 
-// refresh api handler :
+// Refresh handler - refreshes user session (get current logged-in user):
 func RefershHandler(w http.ResponseWriter, r *http.Request) {
 
+	// getting context :
 	uidVal := r.Context().Value(middleware.ContextUserIDKey)
 	userID, ok := uidVal.(int)
 	if !ok {
@@ -27,29 +29,29 @@ func RefershHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// fetching user from DB:
 	user, err := models.GetUserByID(userID)
 	if err != nil {
 		http.Error(w, "User not found", http.StatusNotFound)
 		return
 	}
-
 	if user == nil {
 		http.Error(w, "user not found", http.StatusNotFound)
 		return
 	}
 
+	// return safe user info :
 	resp := map[string]interface{}{
 		"id":       user.ID,
 		"username": user.Username,
 		"email":    user.Email,
 		"role":     user.Role,
 	}
-
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 }
 
-// signup api handler :
+// Signup handler - Registers new user :
 func SignupHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Only POST allowed", http.StatusMethodNotAllowed)
@@ -87,7 +89,7 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// login api handler :
+// Login handler - Authenticate user and issue JWT cookie :
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Only POST allowed", http.StatusMethodNotAllowed)
@@ -104,7 +106,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	// getting hashed password from DB :
 	var id int
 	var hashedPwd string
-	err = db.DB.QueryRow("SELECT id, password FROM users WHERE username=$1", u.Username).Scan(&id, &hashedPwd)
+	var role string
+	err = db.DB.QueryRow("SELECT id, password, role FROM users WHERE username=$1", u.Username).Scan(&id, &hashedPwd, &role)
 	if err == sql.ErrNoRows {
 		http.Error(w, "User not found", http.StatusUnauthorized)
 		return
@@ -113,7 +116,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// comparing the hash :
+	// comparing the hashes :
 	err = bcrypt.CompareHashAndPassword([]byte(hashedPwd), []byte(u.Password))
 	if err != nil {
 		http.Error(w, "Invalid password compare hash and pswd", http.StatusUnauthorized)
@@ -121,23 +124,22 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// generate JWT :
-	token, err := GenerateJWT(id, u.Username)
+	token, err := services.GenerateJWT(id, u.Username, role)
 	if err != nil {
 		http.Error(w, "failed to generate the JWT ", http.StatusExpectationFailed)
 		return
 	}
 
-	// set it to cookies : 
+	// set it to cookies :
 	http.SetCookie(w, &http.Cookie{
-        Name:     "token",   
-        Value:    token,     
-        Path:     "/",       
-        Expires:  time.Now().Add(5 * time.Minute), 
-        HttpOnly: true,              
-        Secure:   false,             
-        SameSite: http.SameSiteLaxMode,
-    })
-
+		Name:     "token",
+		Value:    token,
+		Path:     "/",
+		Expires:  time.Now().Add(5 * time.Minute),
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+	})
 
 	// sucess response :
 	w.Header().Set("Content-Type", "application/json")
@@ -147,21 +149,20 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-
-// logout api handler : 
+// Logout handler - clearing JWT cookie :
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
-    http.SetCookie(w, &http.Cookie{
-        Name:     "token",
-        Value:    "",
-        Path:     "/",
-        MaxAge:   -1,
-        HttpOnly: true,
-        Secure:   false,
-        SameSite: http.SameSiteLaxMode,
-    })
+	http.SetCookie(w, &http.Cookie{
+		Name:     "token",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1, // deleting it immediately
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+	})
 
-    w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(map[string]string{
-        "message": "Logged out successfully",
-    })
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"message": "Logged out successfully",
+	})
 }
