@@ -1,0 +1,391 @@
+openapi: 3.0.0
+info:
+  title: File Storage API
+  version: 1.0.0
+  description: >
+    A file storage system with authentication, deduplication, public file sharing, and admin role management.
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+paths:
+  /api/signup:
+    post:
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserSignupRequest"
+      responses:
+        "200":
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResponse"
+
+  /api/login:
+    post:
+      summary: Authenticate user and issue JWT cookie
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserLoginRequest"
+      responses:
+        "200":
+          description: Login success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResponse"
+
+  /api/logout:
+    post:
+      summary: Logout user (clears JWT cookie)
+      responses:
+        "200":
+          description: Logout success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /api/me:
+    get:
+      summary: Get current logged-in user info
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Returns safe user info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSafe"
+
+  /api/files:
+    get:
+      summary: List files uploaded by current user
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: query
+          name: search
+          schema: { type: string }
+        - in: query
+          name: mimeType
+          schema: { type: string }
+        - in: query
+          name: minSize
+          schema: { type: string }
+        - in: query
+          name: maxSize
+          schema: { type: string }
+        - in: query
+          name: startDate
+          schema: { type: string }
+        - in: query
+          name: endDate
+          schema: { type: string }
+        - in: query
+          name: uploader
+          schema: { type: string }
+      responses:
+        "200":
+          description: List of user files
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileListResponse"
+
+  /api/upload:
+    post:
+      summary: Upload a new file
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Upload result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadResponse"
+
+  /api/fileDelete/{id}:
+    get:
+      summary: Delete a file by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema: { type: integer }
+          required: true
+      responses:
+        "200":
+          description: File deletion success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /api/fileDownload/{id}:
+    get:
+      summary: Download a file by ID
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema: { type: integer }
+          required: true
+      responses:
+        "200":
+          description: File stream (binary)
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+
+  /api/fileTogglePrivacy/{id}:
+    get:
+      summary: Toggle privacy of a file
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema: { type: integer }
+          required: true
+      responses:
+        "200":
+          description: Privacy toggled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FilePrivacyResponse"
+
+  /api/fileDetails/{id}:
+    get:
+      summary: Get details of a file
+      parameters:
+        - in: path
+          name: id
+          schema: { type: integer }
+          required: true
+      responses:
+        "200":
+          description: File details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/File"
+
+  /api/publicFiles:
+    get:
+      summary: Get list of all public files
+      responses:
+        "200":
+          description: Public files
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicFileListResponse"
+
+  /api/adminFiles:
+    get:
+      summary: List all files (admin only)
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: query
+          name: search
+          schema: { type: string }
+        - in: query
+          name: mimeType
+          schema: { type: string }
+        - in: query
+          name: minSize
+          schema: { type: string }
+        - in: query
+          name: maxSize
+          schema: { type: string }
+        - in: query
+          name: startDate
+          schema: { type: string }
+        - in: query
+          name: endDate
+          schema: { type: string }
+        - in: query
+          name: uploader
+          schema: { type: string }
+      responses:
+        "200":
+          description: Admin file list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileListResponse"
+
+  /api/makeAdmin:
+    post:
+      summary: Change user role to admin
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+      responses:
+        "200":
+          description: User promoted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleChangeResponse"
+
+  /api/makeUser:
+    post:
+      summary: Change user role to normal user
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+      responses:
+        "200":
+          description: User demoted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleChangeResponse"
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+
+  schemas:
+    UserSignupRequest:
+      type: object
+      properties:
+        username: { type: string }
+        email: { type: string }
+        password: { type: string }
+
+    UserLoginRequest:
+      type: object
+      properties:
+        username: { type: string }
+        password: { type: string }
+
+    UserSafe:
+      type: object
+      properties:
+        id: { type: integer }
+        username: { type: string }
+        email: { type: string }
+        role: { type: string }
+
+    StatusResponse:
+      type: object
+      properties:
+        status: { type: string }
+        msg: { type: string }
+
+    File:
+      type: object
+      properties:
+        id: { type: integer }
+        filename: { type: string }
+        size: { type: integer }
+        uploaded_at: { type: string, format: date-time }
+        uploader_id: { type: integer }
+        is_public: { type: boolean }
+        deduplicated: { type: boolean }
+        mime_type: { type: string }
+        hash: { type: string }
+
+    FileListResponse:
+      type: object
+      properties:
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/File"
+        dedupSize: { type: integer }
+        originalSize: { type: integer }
+        saveSize: { type: integer }
+
+    UploadResponse:
+      type: object
+      properties:
+        status: { type: string }
+        hash: { type: string }
+
+    FilePrivacyResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        is_public: { type: boolean }
+
+    PublicFile:
+      type: object
+      properties:
+        id: { type: integer }
+        filename: { type: string }
+        size: { type: integer }
+        uploaded_at: { type: string, format: date-time }
+        is_master: { type: boolean }
+        uploader: { type: string }
+        download_count: { type: integer }
+
+    PublicFileListResponse:
+      type: object
+      properties:
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/PublicFile"
+        total: { type: integer }
+
+    RoleChangeResponse:
+      type: object
+      properties:
+        status: { type: string }
+        username: { type: string }
+        newRole: { type: string }
