@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   db:
     image: postgres:15
@@ -10,6 +12,40 @@ services:
       - "5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+      - ./backend/internal/db/migrations/001_init.up.sql:/docker-entrypoint-initdb.d/001_init.up.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U filevault_db -d filevault"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    container_name: filevault_backend
+    depends_on:
+      db:
+        condition: service_healthy
+
+    env_file:
+      - ./backend/.env
+    environment:
+      JWT_KEY: rachit_joshi
+      PORT: 8080
+      USER_QUOTA_MB: 10
+      API_RATE_LIMIT: 10
+      DB_URL: postgres://filevault_db:filevault_db@db:5432/filevault?sslmode=disable
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./backend/.env:/app/.env
+
+  frontend:
+    build: ./frontend
+    container_name: filevault_frontend
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
 
 volumes:
   db_data:

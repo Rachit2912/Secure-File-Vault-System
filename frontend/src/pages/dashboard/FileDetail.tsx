@@ -116,7 +116,7 @@ const FileDetail: React.FC = () => {
               }}
               onClick={async () => {
                 await deleteFile(file.id);
-                navigate("/home");
+                navigate("/");
               }}
             >
               Delete
