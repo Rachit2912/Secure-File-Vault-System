@@ -104,6 +104,61 @@ Each `.down.sql` file drops or removes the corresponding column, allowing rollba
 
 ---
 
+## ⚡ Running Migrations
+
+The project uses **plain SQL files**, so you can apply migrations in several ways.
+
+### ▶️ 1. Using `migrate` CLI (recommended)
+
+If you have the [golang-migrate](https://github.com/golang-migrate/migrate) CLI installed,
+you can run migrations without restarting containers.
+
+**Apply all migrations up:**
+
+```bash
+migrate -path backend/internal/db/migrations \
+        -database "postgres://filevault_db:filevault_db@localhost:5432/filevault?sslmode=disable" up 2
+```
+
+**Rollback the last migration:**
+
+```bash
+migrate -path backend/internal/db/migrations \
+        -database "postgres://filevault_db:filevault_db@localhost:5432/filevault?sslmode=disable" down 1
+```
+
+> 💡 Make sure PostgreSQL is running and accessible on the given host/port.
+
+### ▶️ 2. Using Docker
+
+Migrations are automatically applied when the database container starts, because the `.sql` files are mounted into
+`/docker-entrypoint-initdb.d/` in `docker-compose.yml`.
+
+To rebuild and re-run migrations:
+
+```bash
+docker-compose down -v     # stop and remove existing DB + volume
+docker-compose up --build  # start fresh and run all .sql migrations
+```
+
+### ▶️ 3. Manual psql
+
+For full control, you can also run individual `.sql` files directly:
+
+```bash
+psql -U filevault_db -d filevault -h localhost \
+     -f backend/internal/db/migrations/001_init.up.sql
+```
+
+To rollback:
+
+```bash
+psql -U filevault_db -d filevault -h localhost \
+     -f backend/internal/db/migrations/001_init.down.sql
+```
+
+---
+
 ## 👑 Default Admin User
 
 On initialization, a default admin account is created:
