@@ -45,7 +45,32 @@ docker-compose up --build
 
 ## ⚡ Manual Setup
 
-### 1. Backend
+1. Database (PostgreSQL)
+
+Create a new PostgreSQL database:
+
+```bash
+createdb filevault
+```
+
+Or manually in psql:
+```bash
+CREATE DATABASE filevault;
+```
+
+Run migrations from backend/db/migrations:
+
+# option A: using migrate CLI
+```bash
+migrate -path backend/db/migrations -database "postgres://postgres:password@localhost:5432/filevault?sslmode=disable" up 1
+```
+
+# option B: using psql
+```bash
+psql -U postgres -d filevault -f backend/db/migrations/001_init.sql
+```
+
+### 2. Backend
 
 ```bash
 cd backend
@@ -54,7 +79,7 @@ go mod tidy
 go run ./cmd/server
 ```
 
-### 2. Frontend
+### 3. Frontend
 
 ```bash
 cd frontend
