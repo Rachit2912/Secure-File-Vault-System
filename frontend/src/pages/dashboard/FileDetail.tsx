@@ -46,8 +46,6 @@ const FileDetail: React.FC = () => {
 
   if (!file) return <p>Loading...</p>;
 
-  console.log("FileDetail response:", file);
-
   return (
     <div style={{ padding: "2rem" }}>
       <button onClick={() => navigate("/")}>Back</button>
