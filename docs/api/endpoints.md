@@ -67,7 +67,13 @@
 
 **Handler:** `LogoutHandler`
 
-- **Request body:** _(none, just requires valid token cookie)_
+- **Request body:**
+
+```json
+{
+  "token": "<jwt-token>"
+}
+```
 
 - **Response (200 OK)**
 
@@ -301,9 +307,7 @@ Content-Type: application/octet-stream
 
 - **Request**
 
-```json
-{}
-```
+_No request body_
 
 - **Response (200 OK)**
 
