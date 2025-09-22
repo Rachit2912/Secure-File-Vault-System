@@ -1,3 +1,5 @@
+[Back to Home Page](../README.md)
+
 # 📦 Database Schema
 
 This document explains the **database schema** for the project, including all tables, relationships, and relevant notes.

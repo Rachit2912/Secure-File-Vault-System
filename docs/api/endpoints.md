@@ -1,3 +1,5 @@
+[Back to Home Page](../../README.md)
+
 # 📌 Authentication Endpoints :
 
 ### **POST /api/signup**
