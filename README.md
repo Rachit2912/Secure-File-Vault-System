@@ -118,3 +118,6 @@ For deeper details, see the docs folder:
 - [Postman Collection](docs/api/endpoints.yml)
 - [Database Schema](docs/db-schema.md)
 - [Architecture & Design](docs/architecture.md)
+
+Thank You!
+~ Rachit2912
