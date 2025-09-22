@@ -119,5 +119,7 @@ For deeper details, see the docs folder:
 - [Database Schema](docs/db-schema.md)
 - [Architecture & Design](docs/architecture.md)
 
-Thank You!
-~ Rachit2912
+---
+
+> Thank You!
+> _Rachit2912_
