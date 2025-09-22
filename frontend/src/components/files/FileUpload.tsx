@@ -1,3 +1,4 @@
+// src/components/files/FileUpload.tsx
 import React, { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { uploadFile } from "../../api/files";

@@ -1,0 +1,2 @@
+ALTER TABLE files
+ADD COLUMN IF NOT EXISTS description TEXT;

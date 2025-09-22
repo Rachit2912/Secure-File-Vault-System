@@ -18,7 +18,7 @@ export async function apiLogin(p: LoginPayload) {
   return postReq("/api/login", p);
 }
 
-// user logout (clears cookies) :
+// user logout (clears cookies/session) :
 export async function apiLogout() {
   return postReq("/api/logout", {});
 }

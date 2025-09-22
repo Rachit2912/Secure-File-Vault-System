@@ -95,7 +95,6 @@ const Filters: React.FC<FiltersProps> = ({ onApply, onReset }) => {
         <option value="image/png">PNG</option>
         <option value="application/pdf">PDF</option>
         <option value="text/plain">Text</option>
-        <option value="application/zip">ZIP</option>
       </select>
 
       {/* min file size range :  */}

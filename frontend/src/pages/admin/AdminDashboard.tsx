@@ -4,7 +4,7 @@ import { FileUpload } from "../../components/files/FileUpload";
 import { FileList } from "../../components/files/FileList";
 import { StorageStats } from "../../components/stats/StorageStats";
 import Filters from "../../components/filters/Filters";
-import * as adminApi from "../../api/admin"; 
+import * as adminApi from "../../api/admin"; // new file for admin APIs
 import type { FileMeta } from "../../api/files";
 import { useNavigate } from "react-router-dom";
 
