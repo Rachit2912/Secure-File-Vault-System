@@ -36,6 +36,8 @@ func main() {
 	r.HandleFunc("/api/login", handlers.LoginHandler).Methods("POST")
 	r.HandleFunc("/api/logout", handlers.LogoutHandler).Methods("POST")
 	r.HandleFunc("/api/publicFiles", handlers.PublicFilesHandler).Methods("GET")
+	// file details route: soft auth → allows guests but still passes context if logged in
+	r.Handle("/api/fileDetails/{id}", middleware.SoftAuthMiddleware(http.HandlerFunc(handlers.FileDetailHandler),)).Methods("GET")
 
 
 
@@ -86,6 +88,11 @@ func main() {
 	r.Handle("/api/fileTogglePrivacy/{id}", middleware.AuthMiddleware(
 		middleware.RateLimitMiddleware(http.HandlerFunc(handlers.FileTogglePrivacyHandler)),
 		)).Methods("GET")
+
+	
+
+
+
 
 	// loading the port no. :
 	port := config.AppConfig.Port
