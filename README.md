@@ -33,59 +33,14 @@ A secure file storage and sharing application with backend in **Go**, frontend i
 ## 🚀 Quick Start (Docker)
 
 From the project root:
-
+1) configure .env values 
+2) run : 
 ```bash
 docker-compose up --build
 ```
 
 * Backend: **[http://localhost:8080](http://localhost:8080)**
 * Frontend: **[http://localhost:5173](http://localhost:5173)**
-
----
-
-## ⚡ Manual Setup
-
-1. Database (PostgreSQL)
-
-Create a new PostgreSQL database:
-
-```bash
-createdb filevault
-```
-
-Or manually in psql:
-```bash
-CREATE DATABASE filevault;
-```
-
-Run migrations from backend/db/migrations:
-
-option A: using migrate CLI
-```bash
-migrate -path backend/db/migrations -database "postgres://postgres:password@localhost:5432/filevault?sslmode=disable" up 1
-```
-
-option B: using psql
-```bash
-psql -U postgres -d filevault -f backend/db/migrations/001_init.up.sql
-```
-
-### 2. Backend
-
-```bash
-cd backend
-cp .env.example .env   # edit your .env credentials
-go mod tidy
-go run ./cmd/server
-```
-
-### 3. Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
 
 ---
 
