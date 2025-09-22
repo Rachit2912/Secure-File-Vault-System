@@ -457,3 +457,5 @@ Optional query parameters: `search`, `mimeType`, `minSize`, `maxSize`, `startDat
   - `500 Internal Server Error` → DB error
 
 ---
+
+[Back to Home Page](../../README.md)

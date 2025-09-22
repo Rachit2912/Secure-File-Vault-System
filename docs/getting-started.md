@@ -85,3 +85,7 @@ npm run dev
 - If backend cannot connect to DB, check `.env` values and database is running.
 - If frontend cannot reach backend, confirm `VITE_API_URL` matches backend URL.
 - If migrations fail, recheck SQL files in `backend/db/migrations/`.
+
+---
+
+[Back to Home Page](../README.md)
