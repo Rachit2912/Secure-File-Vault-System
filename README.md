@@ -1,8 +1,7 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/2xw7QaEj)
 
 ---
 
-# File Vault — Capstone Internship Task
+# Secure File Vault 
 
 A secure file storage and sharing application with backend in **Go**, frontend in **React + TypeScript**, and **PostgreSQL** as the database.
 
