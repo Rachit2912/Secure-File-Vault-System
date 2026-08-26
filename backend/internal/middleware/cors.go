@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"backend/internal/config"
 	"net/http"
 )
 
@@ -11,8 +12,12 @@ func CORS(next http.Handler) http.Handler {
 
 		// allowlist of origins
 		allowedOrigins := map[string]bool{
-			"http://localhost:3000": true, 
-			"http://localhost:5173": true, 
+			"http://localhost:3000": true,
+			"http://localhost:5173": true,
+		}
+
+		if frontendURL := config.AppConfig.FrontendURL; frontendURL != "" {
+			allowedOrigins[frontendURL] = true
 		}
 
 		if allowedOrigins[origin] {

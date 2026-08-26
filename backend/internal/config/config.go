@@ -10,14 +10,15 @@ import (
 
 // Config holds all .env file values :
 type Config struct {
-	Port              string
-	DBUrl             string
-	JWTKey            string
-	UserQuotaMB       int
-	ApiRateLimit      int
-	SupabaseURL       string
+	Port               string
+	DBUrl              string
+	JWTKey             string
+	UserQuotaMB        int
+	ApiRateLimit       int
+	SupabaseURL        string
 	SupabaseServiceKey string
-	SupabaseBucket    string
+	SupabaseBucket     string
+	FrontendURL        string
 }
 
 // AppConfig will be populated on app booting :
@@ -38,7 +39,8 @@ func LoadConfig() {
 	apiRateLimit := getEnvAsInt("API_RATE_LIMIT", 10)
 	supabaseURL := getEnv("SUPABASE_URL", "")
 	supabaseServiceKey := getEnv("SUPABASE_SERVICE_KEY", "")
-	supabaseBucket := getEnv("SUPABASE_BUCKET", "vault-files")
+	supabaseBucket := getEnv("SUPABASE_BUCKET", "file-vault")
+	frontendURL := getEnv("FRONTEND_URL", "http://localhost:5173")
 
 	AppConfig = Config{
 		Port:               port,
@@ -49,6 +51,7 @@ func LoadConfig() {
 		SupabaseURL:        supabaseURL,
 		SupabaseServiceKey: supabaseServiceKey,
 		SupabaseBucket:     supabaseBucket,
+		FrontendURL:        frontendURL,
 	}
 }
 

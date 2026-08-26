@@ -5,14 +5,13 @@ import (
 	"backend/internal/middleware"
 	"backend/internal/models"
 	"backend/internal/services"
+	"backend/internal/storage"
 	"backend/internal/utils"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strconv"
 	"time"
 
@@ -268,18 +267,11 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// New file: saved physically :
+	// New file: saved to Supabase Storage :
 	timestamp := time.Now().UnixNano()
-	filePath := fmt.Sprintf("./uploads/%d_%s", timestamp, handler.Filename)
-	out, err := os.Create(filePath)
-	if err != nil {
-		http.Error(w, "Could not create file", http.StatusInternalServerError)
-		return
-	}
-	defer out.Close()
-	_, err = io.Copy(out, file)
-	if err != nil {
-		http.Error(w, "Failed to save file", http.StatusInternalServerError)
+	storagePath := fmt.Sprintf("files/%d_%s", timestamp, handler.Filename)
+	if err := storage.UploadFile(storagePath, file, mimeType); err != nil {
+		http.Error(w, "Failed to upload file to storage: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -287,7 +279,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 	_, err = db.DB.Exec(
 		`INSERT INTO files (user_id, filename, filepath, hash, size, mime_type, reference_count, is_master)
 		 VALUES ($1, $2, $3, $4, $5, $6, 1, TRUE)`,
-		userID, handler.Filename, filePath, hash, size, mimeType,
+		userID, handler.Filename, storagePath, hash, size, mimeType,
 	)
 	if err != nil {
 		http.Error(w, "DB insert error: "+err.Error(), http.StatusInternalServerError)
@@ -374,13 +366,16 @@ func FileDeleteHandler(w http.ResponseWriter, r *http.Request) {
 			// Delete current master row :
 			_, _ = db.DB.Exec(`DELETE FROM files WHERE id=$1`, id)
 		} else {
-			// Case 3: Only reference → delete DB row + physical file :
+			// Case 3: Only reference → delete DB row + file from storage :
+			if err := storage.DeleteFile(filepathOnDisk); err != nil {
+				http.Error(w, "Storage delete error: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
 			_, err = db.DB.Exec(`DELETE FROM files WHERE id=$1`, id)
 			if err != nil {
 				http.Error(w, "DB delete error: "+err.Error(), http.StatusInternalServerError)
 				return
 			}
-			_ = os.Remove(filepathOnDisk) // remove file physically
 		}
 	}
 	// Responding success :
@@ -398,10 +393,11 @@ func FileDownloadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// looking up for the file in DB :
-	var filename, filepathOnDisk string
+	var filename, storagePath string
+	var mimeType sql.NullString
 	err := db.DB.QueryRow(
-		`SELECT filename, filepath FROM files WHERE id=$1`, id,
-	).Scan(&filename, &filepathOnDisk)
+		`SELECT filename, filepath, mime_type FROM files WHERE id=$1`, id,
+	).Scan(&filename, &storagePath, &mimeType)
 
 	if err == sql.ErrNoRows {
 		http.Error(w, "File not found", http.StatusNotFound)
@@ -411,9 +407,10 @@ func FileDownloadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// checking if file exists on the filePath :
-	if _, err := os.Stat(filepathOnDisk); os.IsNotExist(err) {
-		http.Error(w, "File missing on server", http.StatusInternalServerError)
+	// downloading file bytes from Supabase storage :
+	data, err := storage.DownloadFile(storagePath)
+	if err != nil {
+		http.Error(w, "Failed to download file from storage: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -421,10 +418,14 @@ func FileDownloadHandler(w http.ResponseWriter, r *http.Request) {
 	_, _ = db.DB.Exec(`UPDATE files SET download_count = download_count + 1 WHERE id=$1`, id)
 
 	// sending the response :
+	contentType := "application/octet-stream"
+	if mimeType.Valid && mimeType.String != "" {
+		contentType = mimeType.String
+	}
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
-	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Type", contentType)
 
-	http.ServeFile(w, r, filepath.Clean(filepathOnDisk))
+	w.Write(data)
 }
 
 // privacy change handler - changes a file's privacy  :

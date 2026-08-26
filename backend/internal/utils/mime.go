@@ -19,7 +19,7 @@ func ValidateMIME(filename string, header []byte) error {
 	if exts, _ := mime.ExtensionsByType(detected); len(exts) > 0 {
 		for _, e := range exts {
 			if e == ext {
-				return nil 
+				return nil
 			}
 		}
 

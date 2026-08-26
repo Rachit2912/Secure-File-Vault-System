@@ -20,14 +20,14 @@ func ParseJWTFromRequest(r *http.Request) (int, string, error) {
 		return 0, "", fmt.Errorf("JWT_KEY not configured")
 	}
 
-	// reading cookie  for token: 
+	// reading cookie  for token:
 	cookie, err := r.Cookie("token")
 	if err != nil {
-		return 0, "", err 
+		return 0, "", err
 	}
 	tokenStr := cookie.Value
 
-	// parsing into claims : 
+	// parsing into claims :
 	claims := &models.Claims{}
 	token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {

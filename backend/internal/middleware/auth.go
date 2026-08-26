@@ -19,14 +19,15 @@ type contextKey string
 const ContextUserIDKey = contextKey("userID")
 const ContextUserRoleKey = contextKey("role")
 
-
 // fn. for validating JWT & adding user info to context :
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		// secret JWT key : 
-		var jwtKey = []byte(config.AppConfig.JWTKey) 
-		if len(jwtKey) == 0 {log.Fatal("JWT_KEY not found, plz set it in .env file")}
+		// secret JWT key :
+		var jwtKey = []byte(config.AppConfig.JWTKey)
+		if len(jwtKey) == 0 {
+			log.Fatal("JWT_KEY not found, plz set it in .env file")
+		}
 
 		// reading token from cookie:
 		cookie, err := r.Cookie("token")
@@ -36,7 +37,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		}
 		tokenStr := cookie.Value
 
-		// parsing & validating JWT : 
+		// parsing & validating JWT :
 		claims := &models.Claims{}
 		token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -49,10 +50,9 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-
 		//  storing userID  & role in context for handlers
 		ctx := context.WithValue(r.Context(), ContextUserIDKey, claims.UserID)
-		ctx = context.WithValue(ctx,ContextUserRoleKey,claims.Role)
+		ctx = context.WithValue(ctx, ContextUserRoleKey, claims.Role)
 		// calling next handler :
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
