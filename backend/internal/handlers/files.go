@@ -368,15 +368,15 @@ func FileDeleteHandler(w http.ResponseWriter, r *http.Request) {
 			// Delete current master row :
 			_, _ = db.DB.Exec(`DELETE FROM files WHERE id=$1`, id)
 		} else {
-			// Case 3: Only reference → delete DB row + file from storage :
-			if err := storage.DeleteFile(filepathOnDisk); err != nil {
-				http.Error(w, "Storage delete error: "+err.Error(), http.StatusInternalServerError)
-				return
-			}
+			// Case 3: Only reference → delete DB row first, then clean up storage :
 			_, err = db.DB.Exec(`DELETE FROM files WHERE id=$1`, id)
 			if err != nil {
 				http.Error(w, "DB delete error: "+err.Error(), http.StatusInternalServerError)
 				return
+			}
+			if err := storage.DeleteFile(filepathOnDisk); err != nil {
+				// Log warning if storage deletion fails after DB row is safely removed
+				fmt.Printf("Warning: failed to delete storage object %s: %v\n", filepathOnDisk, err)
 			}
 		}
 	}
@@ -396,10 +396,11 @@ func FileDownloadHandler(w http.ResponseWriter, r *http.Request) {
 
 	// looking up for the file in DB :
 	var filename, storagePath string
+	var size int64
 	var mimeType sql.NullString
 	err := db.DB.QueryRow(
-		`SELECT filename, filepath, mime_type FROM files WHERE id=$1`, id,
-	).Scan(&filename, &storagePath, &mimeType)
+		`SELECT filename, filepath, size, mime_type FROM files WHERE id=$1`, id,
+	).Scan(&filename, &storagePath, &size, &mimeType)
 
 	if err == sql.ErrNoRows {
 		http.Error(w, "File not found", http.StatusNotFound)
@@ -426,6 +427,7 @@ func FileDownloadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
 	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Length", strconv.FormatInt(int64(len(data)), 10))
 
 	w.Write(data)
 }

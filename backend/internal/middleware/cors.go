@@ -3,6 +3,7 @@ package middleware
 import (
 	"backend/internal/config"
 	"net/http"
+	"strings"
 )
 
 // CORS middleware → adds cross-origin headers
@@ -17,7 +18,8 @@ func CORS(next http.Handler) http.Handler {
 		}
 
 		if frontendURL := config.AppConfig.FrontendURL; frontendURL != "" {
-			allowedOrigins[frontendURL] = true
+			normalizedURL := strings.TrimSuffix(frontendURL, "/")
+			allowedOrigins[normalizedURL] = true
 		}
 
 		if allowedOrigins[origin] {
