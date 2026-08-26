@@ -428,8 +428,11 @@ func FileDownloadHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
 	w.Header().Set("Content-Type", contentType)
 	w.Header().Set("Content-Length", strconv.FormatInt(int64(len(data)), 10))
+	w.Header().Set("X-Content-Type-Options", "nosniff")
 
-	w.Write(data)
+	if _, err := w.Write(data); err != nil {
+		fmt.Printf("Error writing download response: %v\n", err)
+	}
 }
 
 // privacy change handler - changes a file's privacy  :
