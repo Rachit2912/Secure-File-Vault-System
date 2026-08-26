@@ -12,12 +12,18 @@ import (
 	"backend/internal/middleware"
 
 	"github.com/gorilla/mux"
+	"backend/internal/storage"
 )
 
 func main() {
 
 	// loading environment variables from .env file
 	config.LoadConfig()
+
+	if err := storage.Init(); err != nil {
+		log.Fatal("Supabase Storage initialization failed:", err)
+	}
+	fmt.Println("✅ Supabase Storage initialized")
 	
 	// connection to postgrSQL : 
 	if err := db.Connect(); err != nil {

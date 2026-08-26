@@ -1,4 +1,4 @@
-import { getReq, handleUpload } from "./index";
+import { API_BASE, getReq, handleUpload } from "./index";
 import type { FilterValues } from "../components/filters/Filters";
 
 // File Metadata type for typed responses :
@@ -49,7 +49,7 @@ export async function getFileDetails(fileId: number) {
 
 // trigger file download (redirects browser):
 export async function downloadFile(fileId: number) {
-  window.location.href = `/api/fileDownload/${fileId}`;
+  window.location.href = `${API_BASE}/api/fileDownload/${fileId}`;
 }
 
 // toggle file public/private state :
