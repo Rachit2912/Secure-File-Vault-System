@@ -43,32 +43,11 @@ Or (manual mode):
 
 ---
 
-## 🚀 Production & Cloud Hosting Deployment Requirements
-
-### Environment Variables
-
-Ensure the following environment variables are provided to the backend in production:
-
-- `PORT` — Server listening port (provided by cloud hosting)
-- `DB_URL` — PostgreSQL database connection string (e.g., Supabase PostgreSQL)
-- `JWT_KEY` — Secret key for signing JWT tokens
-- `USER_QUOTA_MB` — Maximum storage quota per user in MB (e.g. `10`)
-- `API_RATE_LIMIT` — API rate limit window in seconds (e.g. `2`)
-- `FRONTEND_URL` — Deployed frontend origin URL for CORS (e.g. `https://your-app.vercel.app`)
-- `SUPABASE_URL` — Supabase project URL (e.g. `https://your-project.supabase.co`)
-- `SUPABASE_SERVICE_KEY` — Supabase service role key (**Server-side only; never expose to the frontend**)
-- `SUPABASE_BUCKET` — Supabase Storage bucket name (default: `file-vault`)
-
-### Storage Setup
-
-- Create a private Supabase Storage bucket named `file-vault` (or configured via `SUPABASE_BUCKET`).
-- The backend handles all file uploads, downloads, and deletions using the Supabase Service Role Key server-side for authorization and ownership verification.
-
 ## 🚀 Quick Start with Docker (Recommended)
 
 From the project root:
 
-1. Configure `.env` values (see `backend/.env.example`)
+1. Configure `.env` values (see `backend/.env.example` if present)
 2. Run:
 
    ```bash
