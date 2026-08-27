@@ -395,12 +395,14 @@ func FileDownloadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// looking up for the file in DB :
+	var fileOwnerID int
 	var filename, storagePath string
 	var size int64
 	var mimeType sql.NullString
+	var isPublic bool
 	err := db.DB.QueryRow(
-		`SELECT filename, filepath, size, mime_type FROM files WHERE id=$1`, id,
-	).Scan(&filename, &storagePath, &size, &mimeType)
+		`SELECT user_id, filename, filepath, size, mime_type, is_public FROM files WHERE id=$1`, id,
+	).Scan(&fileOwnerID, &filename, &storagePath, &size, &mimeType, &isPublic)
 
 	if err == sql.ErrNoRows {
 		http.Error(w, "File not found", http.StatusNotFound)
@@ -408,6 +410,24 @@ func FileDownloadHandler(w http.ResponseWriter, r *http.Request) {
 	} else if err != nil {
 		http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	// Privacy and ownership authorization check :
+	if !isPublic {
+		uidVal := r.Context().Value(middleware.ContextUserIDKey)
+		if uidVal == nil {
+			http.Error(w, "Unauthorized: private file requires login", http.StatusUnauthorized)
+			return
+		}
+		userID, ok := uidVal.(int)
+		if !ok || userID == 0 {
+			http.Error(w, "Unauthorized: invalid user session", http.StatusUnauthorized)
+			return
+		}
+		if userID != fileOwnerID {
+			http.Error(w, "Forbidden: private file", http.StatusForbidden)
+			return
+		}
 	}
 
 	// downloading file bytes from Supabase storage :
@@ -518,16 +538,19 @@ func FileDetailHandler(w http.ResponseWriter, r *http.Request) {
 	// visibility check :
 	// Try to read user context :
 	uidVal := r.Context().Value(middleware.ContextUserIDKey)
-	role, _ := r.Context().Value(middleware.ContextUserRoleKey).(string)
 
-	var userID int
-	if uidVal != nil {
-		userID, _ = uidVal.(int)
-	}
-
-	// If file is NOT public, allow only uploader or admin :
+	// If file is NOT public, allow only uploader :
 	if !file.IsPublic {
-		if role != "admin" && file.UploaderID != userID {
+		if uidVal == nil {
+			http.Error(w, "Unauthorized: private file requires login", http.StatusUnauthorized)
+			return
+		}
+		userID, ok := uidVal.(int)
+		if !ok || userID == 0 {
+			http.Error(w, "Unauthorized: invalid user session", http.StatusUnauthorized)
+			return
+		}
+		if file.UploaderID != userID {
 			http.Error(w, "Forbidden: private file", http.StatusForbidden)
 			return
 		}

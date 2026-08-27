@@ -34,7 +34,7 @@ func LoadConfig() {
 	// read with fallbacks :
 	port := getEnv("PORT", "8080")
 	dbURL := getEnv("DB_URL", "postgres://filevault_db:filevault_db@db:5432/filevault?sslmode=disable")
-	jwtKey := getEnv("JWT_KEY", "supersecret")
+	jwtKey := getEnv("JWT_KEY", "")
 	userQuotaMB := getEnvAsInt("USER_QUOTA_MB", 10)
 	apiRateLimit := getEnvAsInt("API_RATE_LIMIT", 10)
 	supabaseURL := getEnv("SUPABASE_URL", "")

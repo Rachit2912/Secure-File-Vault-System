@@ -75,8 +75,8 @@ func main() {
 		middleware.RateLimitMiddleware(http.HandlerFunc(handlers.FilesHandler)),
 	)).Methods("GET")
 
-	// file download route with file_id :
-	r.Handle("/api/fileDownload/{id}", middleware.AuthMiddleware(
+	// file download route with file_id : soft auth allows public file downloads without login
+	r.Handle("/api/fileDownload/{id}", middleware.SoftAuthMiddleware(
 		middleware.RateLimitMiddleware(http.HandlerFunc(handlers.FileDownloadHandler)),
 	)).Methods("GET")
 
