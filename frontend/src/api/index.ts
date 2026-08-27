@@ -76,7 +76,7 @@ export function notifyRateLimit(msg: string) {
 // File upload helper (supports FormData) :
 export async function handleUpload(url: string, formData: FormData) {
   // 1. send multipart/form-data request:
-  const res = await fetch(url, {
+  const res = await fetch(`${API_BASE}${url}`, {
     method: "POST",
     body: formData,
     credentials: "include",
