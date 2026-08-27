@@ -395,12 +395,14 @@ func FileDownloadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// looking up for the file in DB :
+	var uploaderID int
 	var filename, storagePath string
 	var size int64
 	var mimeType sql.NullString
+	var isPublic bool
 	err := db.DB.QueryRow(
-		`SELECT filename, filepath, size, mime_type FROM files WHERE id=$1`, id,
-	).Scan(&filename, &storagePath, &size, &mimeType)
+		`SELECT user_id, filename, filepath, size, mime_type, is_public FROM files WHERE id=$1`, id,
+	).Scan(&uploaderID, &filename, &storagePath, &size, &mimeType, &isPublic)
 
 	if err == sql.ErrNoRows {
 		http.Error(w, "File not found", http.StatusNotFound)
@@ -408,6 +410,22 @@ func FileDownloadHandler(w http.ResponseWriter, r *http.Request) {
 	} else if err != nil {
 		http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	// authorization check :
+	uidVal := r.Context().Value(middleware.ContextUserIDKey)
+	userID, authenticated := uidVal.(int)
+
+	if !isPublic {
+		if !authenticated {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		if uploaderID != userID {
+			http.Error(w, "Forbidden: private file", http.StatusForbidden)
+			return
+		}
 	}
 
 	// downloading file bytes from Supabase storage :
