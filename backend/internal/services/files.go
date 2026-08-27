@@ -62,7 +62,7 @@ func GetFileByID(fileID int) (*FileMeta, error) {
         return nil, nil
     }
 
-    // return error if query failed : 
+    // return error if query failed :
     if err != nil {
         return nil, err
     }

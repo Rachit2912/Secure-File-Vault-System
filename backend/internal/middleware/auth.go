@@ -24,8 +24,8 @@ const ContextUserRoleKey = contextKey("role")
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		// secret JWT key : 
-		var jwtKey = []byte(config.AppConfig.JWTKey) 
+		// secret JWT key :
+		var jwtKey = []byte(config.AppConfig.JWTKey)
 		if len(jwtKey) == 0 {log.Fatal("JWT_KEY not found, plz set it in .env file")}
 
 		// reading token from cookie:
@@ -36,7 +36,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		}
 		tokenStr := cookie.Value
 
-		// parsing & validating JWT : 
+		// parsing & validating JWT :
 		claims := &models.Claims{}
 		token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {

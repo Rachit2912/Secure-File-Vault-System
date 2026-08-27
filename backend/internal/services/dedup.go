@@ -19,7 +19,7 @@ func ComputeHash(file multipart.File) (string, error) {
 
 // Find duplicate by comparing hash with candidates
 func FindDuplicate(file multipart.File, candidates []*models.File) (*models.File, string, error) {
-    //computing hash of file : 
+    //computing hash of file :
     hash, err := ComputeHash(file)
     if err != nil {
         return nil, "", err

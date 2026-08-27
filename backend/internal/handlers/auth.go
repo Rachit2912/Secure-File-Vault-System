@@ -130,6 +130,13 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// determine secure / sameSite based on request protocol (HTTPS in production)
+	isHTTPS := r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https"
+	sameSite := http.SameSiteLaxMode
+	if isHTTPS {
+		sameSite = http.SameSiteNoneMode
+	}
+
 	// set it to cookies :
 	http.SetCookie(w, &http.Cookie{
 		Name:     "token",
@@ -137,8 +144,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		Expires:  time.Now().Add(5 * time.Minute),
 		HttpOnly: true,
-		Secure:   false,
-		SameSite: http.SameSiteLaxMode,
+		Secure:   isHTTPS,
+		SameSite: sameSite,
 	})
 
 	// sucess response :
@@ -151,14 +158,20 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 // Logout handler - clearing JWT cookie :
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	isHTTPS := r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https"
+	sameSite := http.SameSiteLaxMode
+	if isHTTPS {
+		sameSite = http.SameSiteNoneMode
+	}
+
 	http.SetCookie(w, &http.Cookie{
 		Name:     "token",
 		Value:    "",
 		Path:     "/",
 		MaxAge:   -1, // deleting it immediately
 		HttpOnly: true,
-		Secure:   false,
-		SameSite: http.SameSiteLaxMode,
+		Secure:   isHTTPS,
+		SameSite: sameSite,
 	})
 
 	w.Header().Set("Content-Type", "application/json")

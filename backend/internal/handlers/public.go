@@ -59,7 +59,7 @@ func PublicFilesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// sending response : 
+	// sending response :
 	resp := map[string]interface{}{
 		"files": files,
 		"total": total,

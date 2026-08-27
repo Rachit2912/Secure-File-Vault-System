@@ -20,10 +20,10 @@ type userLimiter struct {
 var (
 	limiters   = make(map[int]*userLimiter)
 	mu         sync.Mutex
-	cleanupInt = time.Minute * 5 // cleanup old limiters every 5 minutes 
+	cleanupInt = time.Minute * 5 // cleanup old limiters every 5 minutes
 )
 
-// cleaning inavtive limiters : 
+// cleaning inavtive limiters :
 func init() {
 	go func() {
 		for {
@@ -56,7 +56,7 @@ func RateLimitMiddleware(next http.Handler) http.Handler {
             return
         }
 
-        // getting or creating limiter for the current user : 
+        // getting or creating limiter for the current user :
         mu.Lock()
         ul, exists := limiters[userID]
         if !exists {

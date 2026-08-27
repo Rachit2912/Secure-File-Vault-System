@@ -17,7 +17,7 @@ func AdminFilesHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    // checking for admin : 
+    // checking for admin :
     role, ok := r.Context().Value(middleware.ContextUserRoleKey).(string)
     if !ok || role != "admin" {
         http.Error(w, "Forbidden: Admins only", http.StatusForbidden)
@@ -97,7 +97,7 @@ func AdminFilesHandler(w http.ResponseWriter, r *http.Request) {
     }
     defer rows.Close()
 
-    // processing results : 
+    // processing results :
     var files []map[string]interface{}
     var originalSize, dedupSize int64
 
@@ -125,7 +125,7 @@ func AdminFilesHandler(w http.ResponseWriter, r *http.Request) {
 			"is_public": is_public,
         })
 
-        // adding sizes : 
+        // adding sizes :
         originalSize += size
         if isMaster {
             dedupSize += size
@@ -152,7 +152,7 @@ func MakeAdminHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    // checking role from context : 
+    // checking role from context :
     role, ok := r.Context().Value(middleware.ContextUserRoleKey).(string)
     if !ok || role != "admin" {
         http.Error(w, "Forbidden: Admins only", http.StatusForbidden)
@@ -175,7 +175,7 @@ func MakeAdminHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    // response : 
+    // response :
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(map[string]string{
         "status":   "ok",
@@ -191,14 +191,14 @@ func MakeUserHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    // checking for admin role : 
+    // checking for admin role :
     role, ok := r.Context().Value(middleware.ContextUserRoleKey).(string)
     if !ok || role != "admin" {
         http.Error(w, "Forbidden: Admins only", http.StatusForbidden)
         return
     }
 
-    // parsing request body : 
+    // parsing request body :
     var req struct {
         Username string `json:"username"`
     }
@@ -207,14 +207,14 @@ func MakeUserHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    // updating entry in DB : 
+    // updating entry in DB :
     _, err := db.DB.Exec("UPDATE users SET role = $1 WHERE username = $2", "user", req.Username)
     if err != nil {
         http.Error(w, "DB error: "+err.Error(), http.StatusInternalServerError)
         return
     }
 
-    // sending response : 
+    // sending response :
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(map[string]string{
         "status":   "ok",
