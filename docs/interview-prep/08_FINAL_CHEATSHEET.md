@@ -4,6 +4,89 @@
 
 ---
 
+## 0. WHITEBOARD HIGH-LEVEL DESIGN (HLD) DIAGRAM
+
+Draw this on a whiteboard during your interview when asked: *"Can you draw the system architecture?"*
+
+### Mermaid Graph Code
+```mermaid
+graph TD
+    Client[Client Browser / React SPA] -->|HTTP Requests + JWT Cookie| Router[Gorilla Mux Router]
+
+    subgraph Go Backend Server
+        Router --> CORS[CORS Middleware]
+        CORS --> Auth[Auth / SoftAuth Middleware]
+        Auth --> RateLimit[Rate Limit Middleware]
+
+        RateLimit --> Handlers[API Handlers]
+        Handlers --> Dedup[Dedup Service: SHA-256]
+        Handlers --> Quota[Quota Utils]
+        Handlers --> StorageClient[Storage Wrapper]
+    end
+
+    Handlers -->|SQL Queries ($1, $2)| Postgres[(PostgreSQL 15 Database)]
+    StorageClient -->|HTTPS REST SDK| Supabase[(Supabase Storage Bucket)]
+
+    classDef primary fill:#2563eb,color:#fff,stroke:#1d4ed8;
+    classDef secondary fill:#059669,color:#fff,stroke:#047857;
+    classDef db fill:#d97706,color:#fff,stroke:#b45309;
+    class Client primary;
+    class Router,CORS,Auth,RateLimit,Handlers,Dedup,Quota,StorageClient secondary;
+    class Postgres,Supabase db;
+```
+
+### Simple Whiteboard ASCII Diagram (How to draw step-by-step on whiteboard)
+
+```
+STEP 1: Draw Client (React SPA)
+STEP 2: Draw Go API Server Box containing Middleware -> Handlers -> Services
+STEP 3: Draw Database (PostgreSQL) and Object Storage (Supabase) at the bottom
+
++-------------------------------------------------------------------------------+
+|                            CLIENT (React SPA / Browser)                       |
++-------------------------------------------------------------------------------+
+                                        |
+                          HTTP / REST Requests
+                      (Cookies: token = JWT)
+                                        |
+                                        v
++-------------------------------------------------------------------------------+
+|                            GO BACKEND API SERVER                              |
+|                                                                               |
+|  +-------------------------------------------------------------------------+  |
+|  |                           MIDDLEWARE PIPELINE                           |  |
+|  |  CORS Middleware -> Auth / SoftAuth Middleware -> RateLimit Middleware  |  |
+|  +-------------------------------------------------------------------------+  |
+|                                       |                                       |
+|                                       v                                       |
+|  +-------------------------------------------------------------------------+  |
+|  |                            HANDLERS LAYER                               |  |
+|  |  auth.go | files.go (Upload/Download/Delete) | admin.go | public.go      |  |
+|  +-------------------------------------------------------------------------+  |
+|                                 /           \                                 |
+|                                /             \                                |
+|                               v               v                               |
+|  +---------------------------------+     +---------------------------------+  |
+|  |        SERVICES & UTILS         |     |         STORAGE CLIENT          |  |
+|  |  dedup.go (SHA-256 Hash Engine)   |     |  storage/files.go               |  |
+|  |  quota.go & mime.go             |     |  Supabase Storage SDK Client    |  |
+|  +---------------------------------+     +---------------------------------+  |
++-------------------------------------------------------------------------------+
+                 |                                           |
+           SQL Queries                                Cloud Storage API
+        ($1, $2 Parameters)                             (HTTPS REST)
+                 |                                           |
+                 v                                           v
++-----------------------------------+     +-------------------------------------+
+|      POSTGRESQL 15 DATABASE       |     |       SUPABASE STORAGE BUCKET       |
+|  Tables: users, files             |     |       Bucket: 'file-vault'          |
+|  - Relational metadata & FKs      |     |       - Physical master binary      |
+|  - Reference count tracking       |     |         file objects                |
++-----------------------------------+     +-------------------------------------+
+```
+
+---
+
 ## 1. High-Level Architecture Summary
 - **Stack**: Go 1.20+ (Gorilla Mux) + PostgreSQL 15 + Supabase Cloud Storage + React 19 SPA + Docker Compose.
 - **Auth**: Stateless JWT in HTTP-Only, SameSite cookies (5-min TTL). Passwords hashed with Bcrypt.
